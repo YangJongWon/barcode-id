@@ -96,6 +96,19 @@ npm install && npm test        # reading: barcodes and QR rendered with bwip-js,
 cd server && uv run pytest     # identifying: providers against recorded responses, no keys needed
 ```
 
+## Built on and inspired by
+
+| project | license | how it is used |
+|---|---|---|
+| [Quagga2](https://github.com/ericblade/quagga2) | MIT | reads 1D barcodes (dependency) |
+| [paulmillr/qr](https://github.com/paulmillr/qr) | MIT or Apache-2.0 | reads QR; 0.7.2 vendored in `web/vendor/qr/` and patched (FNC1, kanji mode, Shift JIS) |
+| [ZXing](https://github.com/zxing/zxing) | Apache-2.0 | paulmillr/qr contains code inspired by it. The Shift JIS guess for byte segments without an ECI follows ZXing's behaviour. No ZXing code is copied here |
+| [Shape Detection API](https://wicg.github.io/shape-detection-api/) (`BarcodeDetector`) | — | the browser's own reader, used first when present |
+| [GS1 General Specifications](https://www.gs1.org/standards/barcodes-epcrfid-id-keys/gs1-general-specifications), [GS1 Digital Link](https://www.gs1.org/standards/gs1-digital-link) | — | GTIN check digit, application identifiers (01, 10, 11, 13, 15, 17, 21), Digital Link URLs |
+| [nunkil](https://github.com/YangJongWon/nunkil) | Apache-2.0 (same author) | the shop providers and naming in `server/` started there and are relicensed MIT here |
+| [Yahoo!ショッピング](https://developer.yahoo.co.jp/webapi/shopping/), [楽天市場](https://webservice.rakuten.co.jp/), [네이버 쇼핑](https://developers.naver.com/docs/serviceapi/search/shopping/shopping.md), [식품안전나라 C005](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=C005), [Open Food Facts](https://world.openfoodfacts.org) | each service's terms | product data. Open Food Facts data is under the ODbL |
+| [bwip-js](https://github.com/metafloor/bwip-js), [pngjs](https://github.com/pngjs/pngjs), [segno](https://github.com/heuer/segno) | MIT, MIT, BSD-3-Clause | tests only: rendering barcodes and QR. segno made `web/fixtures/kanji-*.png` |
+
 ## License
 
-MIT, see [LICENSE](LICENSE). Quagga2 is MIT. paulmillr/qr is MIT or Apache-2.0. bwip-js and pngjs (MIT) are used in tests only.
+MIT, see [LICENSE](LICENSE). The vendored paulmillr/qr keeps its own license files in `web/vendor/qr/`.
