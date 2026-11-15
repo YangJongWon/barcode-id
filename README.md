@@ -102,7 +102,6 @@ cd server && uv run pytest     # identifying: providers against recorded respons
 |---|---|---|
 | [Quagga2](https://github.com/ericblade/quagga2) | MIT | reads 1D barcodes (dependency) |
 | [paulmillr/qr](https://github.com/paulmillr/qr) | MIT or Apache-2.0 | reads QR; 0.7.2 vendored in `web/vendor/qr/` and patched (FNC1, kanji mode, Shift JIS) |
-| [ZXing](https://github.com/zxing/zxing) | Apache-2.0 | paulmillr/qr contains code inspired by it. The Shift JIS guess for byte segments without an ECI follows ZXing's behaviour. No ZXing code is copied here |
 | [Shape Detection API](https://wicg.github.io/shape-detection-api/) (`BarcodeDetector`) | — | the browser's own reader, used first when present |
 | [GS1 General Specifications](https://www.gs1.org/standards/barcodes-epcrfid-id-keys/gs1-general-specifications), [GS1 Digital Link](https://www.gs1.org/standards/gs1-digital-link) | — | GTIN check digit, application identifiers (01, 10, 11, 13, 15, 17, 21), Digital Link URLs |
 | [nunkil](https://github.com/YangJongWon/nunkil) | Apache-2.0 (same author) | the shop providers and naming in `server/` started there and are relicensed MIT here |

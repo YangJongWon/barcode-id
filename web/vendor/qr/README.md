@@ -1,6 +1,6 @@
 # vendored paulmillr/qr 0.7.2
 
-`index.js`, `decode.js`, `LICENSE` and `LICENSE-MIT` come from [qr@0.7.2](https://github.com/paulmillr/qr) (MIT OR Apache-2.0, used under MIT). `decode.js` is patched; [barcode-id.patch](barcode-id.patch) shows the whole change:
+`index.js`, `decode.js`, `LICENSE` and `LICENSE-MIT` come from [qr@0.7.2](https://github.com/paulmillr/qr) (MIT OR Apache-2.0, used under MIT). Upstream notes that the library contains code inspired by [ZXing](https://github.com/zxing/zxing) (Apache-2.0). `decode.js` is patched; [barcode-id.patch](barcode-id.patch) shows the whole change:
 
 - FNC1 in first position (mode 5): the GS1 element string comes out with the AIM `]Q3` in front, and `%` in alphanumeric segments becomes GS (0x1D); `%%` becomes a literal `%`.
 - FNC1 in second position (mode 9): the output starts with `]Q5` and the application indicator.
