@@ -1,0 +1,28 @@
+[project]
+name = "barcode-id"
+version = "0.1.0"
+description = "Product barcode (JAN / EAN / UPC) -> what it is and what it costs, from free shop and registry APIs"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "httpx>=0.28.1",
+    "pydantic>=2.13.5",
+    "uvicorn[standard]>=0.53.0",
+]
+
+[project.scripts]
+barcode-id = "barcode_id:main"
+
+[build-system]
+requires = ["uv_build>=0.12.14,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.3.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

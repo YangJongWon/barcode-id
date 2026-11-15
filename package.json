@@ -1,0 +1,17 @@
+{
+  "name": "barcode-id",
+  "version": "0.1.0",
+  "description": "Read product barcodes in the browser (Quagga2) and identify them (name, maker, price)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node web/test-read.mjs"
+  },
+  "dependencies": {
+    "@ericblade/quagga2": "1.13.0"
+  },
+  "devDependencies": {
+    "bwip-js": "4.8.0",
+    "pngjs": "7.0.0"
+  }
+}

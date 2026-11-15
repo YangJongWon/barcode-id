@@ -1,0 +1,136 @@
+--- a/decode.js (qr 0.7.2)
++++ b/decode.js (barcode-id: FNC1, kanji mode, Shift JIS bytes)
+@@ -1,4 +1,29 @@
+ import { _ALPHANUMERIC as ALPHANUMERIC, _BYTES as BYTES, _ECC_BLOCKS as ECC_BLOCKS, _ECC_LEVELS as ECC_LEVELS, _GF256 as GF256, _WORDS_PER_BLOCK as WORDS_PER_BLOCK, _formatBits as formatBits, _maskBits as maskBits, _popcnt as popcnt, _rsCached as rsCached, _versionBits as versionBits, } from './index.js';
++// [barcode-id patch] Kanji mode character-count bits per version class (1-9, 10-26, 27-40).
++const KANJI_LENGTH_BITS = [8, 10, 12];
++let SHIFT_JIS;
++const shiftJis = () => {
++    if (SHIFT_JIS === undefined) {
++        try {
++            SHIFT_JIS = new TextDecoder('shift_jis', { fatal: false });
++        }
++        catch {
++            SHIFT_JIS = null; // a runtime without Shift JIS: kanji-mode codes fail as before
++        }
++    }
++    return SHIFT_JIS;
++};
++let UTF8_STRICT;
++const utf8OrShiftJis = (bytes, fallback) => {
++    UTF8_STRICT ??= new TextDecoder('utf-8', { fatal: true });
++    try {
++        return UTF8_STRICT.decode(bytes);
++    }
++    catch {
++        const sjis = shiftJis();
++        return sjis ? sjis.decode(bytes) : fallback.decode(bytes);
++    }
++};
+ const isLE = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([0x11223344]).buffer)[0] === 0x44)();
+ const cap = (value, min, max) => {
+     let result = value;
+@@ -124,15 +149,59 @@
+         const cls = version < 10 ? 0 : version < 27 ? 1 : 2;
+         let eci = 26;
+         let res = '';
++        // [barcode-id patch] FNC1 modes (GS1 / AIM): AIM symbology identifier in front, and '%' in
++        // alphanumeric segments is the FNC1 field separator (GS, 0x1D); '%%' is a literal '%'.
++        let prefix = '';
++        let fnc1 = false;
++        // [barcode-id patch] no ECI in the symbol: byte segments are UTF-8 if they are valid UTF-8,
++        // else Shift JIS (Japanese encoders write Shift JIS bytes without an ECI)
++        let eciSet = false;
+         const parts = deferText ? [] : undefined;
+         while (state.position + 4 <= dataLen * 8) {
+             const mode = read(4);
+             if (!mode)
+                 break;
++            if (mode === 5) {
++                // FNC1 in first position: GS1 element string
++                fnc1 = true;
++                prefix = ']Q3';
++                continue;
++            }
++            if (mode === 9) {
++                // FNC1 in second position: an application indicator follows (00-99, or a letter + 100)
++                const ind = read(8);
++                if (ind < 0)
++                    return FAIL.data;
++                fnc1 = true;
++                prefix = ']Q5' + (ind < 100 ? String(ind).padStart(2, '0') : String.fromCharCode(ind - 100));
++                continue;
++            }
++            if (mode === 8) {
++                // [barcode-id patch] Kanji mode: 13 bits per character, Shift JIS double-byte
++                let length = read(KANJI_LENGTH_BITS[cls]);
++                if (length < 0 || state.position + 13 * length > dataLen * 8)
++                    return FAIL.data;
++                const sjis = new Uint8Array(2 * length);
++                for (let i = 0; i < length; i++) {
++                    const value = read(13);
++                    if (value < 0)
++                        return FAIL.data;
++                    let code = (((value / 0xc0) | 0) << 8) | value % 0xc0;
++                    code += code < 0x1f00 ? 0x8140 : 0xc140;
++                    sjis[2 * i] = code >> 8;
++                    sjis[2 * i + 1] = code & 0xff;
++                }
++                const decoder = shiftJis();
++                if (!decoder)
++                    return FAIL.data;
++                res += decoder.decode(sjis);
++                continue;
++            }
+             if (mode === 7) {
+                 const b0 = read(8);
+                 if (b0 < 0)
+                     return FAIL.data;
++                eciSet = true;
+                 if ((b0 & 0x80) === 0)
+                     eci = b0;
+                 else {
+@@ -166,18 +235,20 @@
+                 let length = read(ALPHANUMERIC_LENGTH_BITS[cls]);
+                 if (length < 0)
+                     return FAIL.data;
++                let seg = '';
+                 for (; length >= 2; length -= 2) {
+                     const value = read(11);
+                     if (value < 0 || value >= 45 * 45)
+                         return FAIL.data;
+-                    res += ALPHANUMERIC[(value / 45) | 0] + ALPHANUMERIC[value % 45];
++                    seg += ALPHANUMERIC[(value / 45) | 0] + ALPHANUMERIC[value % 45];
+                 }
+                 if (length) {
+                     const value = read(6);
+                     if (value < 0 || value >= 45)
+                         return FAIL.data;
+-                    res += ALPHANUMERIC[value];
++                    seg += ALPHANUMERIC[value];
+                 }
++                res += fnc1 ? seg.replace(/%%|%/g, (m) => (m === '%%' ? '%' : '')) : seg;
+             }
+             else if (mode === 4) {
+                 const length = read(BYTE_LENGTH_BITS[cls]);
+@@ -205,16 +276,18 @@
+                     const decoder = ECI_DECODERS[eci] || new TextDecoder(encoding);
+                     for (let i = 0; i < length; i++)
+                         state.bytes[i] = read(8);
+-                    res += decoder.decode(view);
++                    res += !eciSet && eci === 26 ? utf8OrShiftJis(view, decoder) : decoder.decode(view);
+                 }
+             }
+             else
+                 return FAIL.data;
+         }
+         if (!parts)
+-            return res;
++            return prefix + res;
+         if (res)
+             parts.push(res);
++        if (prefix)
++            parts.unshift(prefix);
+         return parts;
+     },
+     finish(decoded, textDecoder) {
